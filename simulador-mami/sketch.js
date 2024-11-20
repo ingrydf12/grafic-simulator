@@ -11,6 +11,7 @@ let vAtual = 50;
 let dAtual;
 let contador = 0;
 let slider;
+let gradeDesativada = false; //Serve somente para evitar problema de lógica no controle das variáveis de rastro e grade
 
 let checkRastro, checkTime, checkGrade;
 
@@ -75,10 +76,23 @@ function MRU(v, t) {
 }
 
 function checkController() {
-  if (checkRastro.checked()) {
-    //console.log("com rastro");
-  } else {
+  //Se o rastro não estiver ligado, ele limpa a tela e verifica a grade para desenhar
+  if (!checkRastro.checked()) {
     background(110);
+    if (checkGrade.checked()) {
+      grade(10, 10, 50);
+    }
+    gradeDesativada = false;
+    //Se o rastro estiver ligado e a grade também, ele vai desenhar ambos (sem background)
+  } else {
+    if (checkGrade.checked()) {
+      grade(10, 10, 50);
+      gradeDesativada = false;
+      //E se a grade estiver desativada mas o rastro não, ele vai limpar a tela uma vez e alterar o booleano -> Desenha o rastro
+    } else if (!gradeDesativada) {
+      background(110);
+      gradeDesativada = true;
+    }
   }
 
   //Controla a contagem do tempo -> Se estiver desmarcado, o controle do tempo é feito por um cálculo que funciona semelhante ao comportamento do frameRate(1)
@@ -93,11 +107,9 @@ function checkController() {
   }
 
   //Controla a grade chamando a função dela correspondente (linhas, colunas, intervalo)
-  if (checkGrade.checked()) {
+  /*if (checkGrade.checked()) {
     grade(10, 10, 50);
-  } else {
-    background(110);
-  }
+  }*/
 }
 
 function colunas(nColunas, altura, intervalo) {
@@ -122,6 +134,7 @@ function grade(nColunas, nLinhas, intervalo) {
   linhas(nLinhas + 1, largura, intervalo);
 }
 
+//Único propósito de reiniciar os valores 
 function reload() {
   tAtual = 0;
   pAtual = 0;
@@ -142,6 +155,7 @@ class pCircle {
     circle(this.x, this.y, this.tam);
   }
 
+  //Chama a função reload pra reiniciar os valores
   verifica() {
     if (this.x > width || this.x < 0 || this.y > height || this.y < 0) {
       reload();
