@@ -4,20 +4,19 @@
   MRU: a velocidade não muda
 */
 const INTERVALO = 0.016667;
-let tAtual = 0;
-let aAtual = -10;
-let pAtual = 0;
-let vAtual = 50;
-let dAtual;
-let contador = 0;
-let slider;
-let gradeDesativada = false; //Serve somente para evitar problema de lógica no controle das variáveis de rastro e grade
+let tAtual = 0, contador = 0;
+let aAtual1 = -10, aAtual2 = -5; //exemplos aí
+let vxAtual, vyAtual;
+let yAtual;
+let s1, s2;
+let altMax1, altMax2;
+let gradeDesativada = false;
 
 let checkRastro, checkTime, checkGrade;
 
 function setup() {
   createCanvas(500, 500);
-  background(110);
+  background(80);
 
   //Instância dos objetos de uma classe nativa
   checkRastro = createCheckbox();
@@ -29,48 +28,100 @@ function setup() {
   checkGrade = createCheckbox();
   checkGrade.position(20, 435);
 
-  slider = createSlider(-20, 20, aAtual);
-  slider.position(10, 10);
-  slider.size(80);
+  s1 = createSlider(-20, 20, aAtual1).position(10, 10).size(80);
+  s2 = createSlider(-20, 20, aAtual2).position(10, 50).size(80);
 
-  fill(255);
-  textSize(14);
-  text("Rastro", 50, 400);
-  text("Tempo", 50, 425);
-  text("Grade", 50, 450);
+  //1: Input de velocidades
+  vxAtual = int(prompt("Insira a velocidade horizontal"));
+  vyAtual = int(prompt("Insira a velocidade vertical"));
 }
 
 function draw() {
-  pAtual = MRU(vAtual, tAtual);
-  dAtual = MRUV(vAtual, aAtual, tAtual);
+  x1 = MRU(vxAtual, tAtual);
+  y1 = MRUV(vyAtual, aAtual1, tAtual);
+
+  x2 = MRU(vxAtual, tAtual);
+  y2 = MRUV(vyAtual, aAtual2, tAtual);
   checkController();
 
-  //O slider controla o valor da aceleração (input)
-  aAtual = slider.value();
+  //Controlar a aceleração dos dois objetos
+  aAtual1 = s1.value();
+  aAtual2 = s2.value();
 
-  b1 = new pCircle(pAtual, 200 - dAtual, 20);
-  b1.verifica();
+  b1 = new pCircle(x1, 200 - y1, 20);
+  b2 = new pCircle(x2, 200 - y2, 20);
+  fill(252, 148, 3);
   b1.desenha();
+  fill(186, 97, 255);
+  b2.desenha();
 
-  //Pra garantir que os checkboxes e textos não sumam
-  fill(255);
+  //Altura máxima
+  vyMax1 = vyAtual + aAtual1 * tAtual;
+  vyMax2 = vyAtual + aAtual2 * tAtual;
+  if (vyMax1 == 0 || vyMax2 == 0) {
+    altMax1 = y1;
+    altMax2 = y2;
+  }
+
+  line(0, 200 - altMax1, width, 200 - altMax1);
+  line(0, 200 - altMax2, width, 200 - altMax2);
+
+  //Alcance máximo -> O mesmo para ambos
+  if (x1 > height || x1 > width) {
+    fill(252, 148, 3);
+    text("Alcance máx 1: " + x1.toFixed(2), 340, 460);
+    noLoop(); //Melhorar
+  }
+  if (x2 > height || x2 > width) {
+    fill(186, 97, 255);
+    text("Alcance máx 2: " + x2.toFixed(2), 340, 480);
+    noLoop(); //Melhorar
+  }
+
+  returnText();
+}
+
+function returnText() {
   textSize(14);
+  fill(255);
   text("Rastro", 50, 400);
   text("Tempo", 50, 425);
   text("Grade", 50, 450);
+  //Slider
   text("Aceleração", 10, 40);
-  fill(200, 50, 100);
-  text(aAtual, 90, 40);
+  fill(255);
+  text(aAtual1, 100, 40);
+  text(aAtual2, 100, 70);
+
+  //3: Cronômetro
+  fill(255);
+  text(tAtual.toFixed(2), 460, 20);
+
+  //MARK: - X1
+  //3: Vel. horizontal
+  fill(252, 148, 3);
+  text(x1.toFixed(2), x1, height / 2);
+  //3: Vel. vertical
+  text("Vel. vertical: " + vyMax1.toFixed(2), x1 + 20, 240 - y1);
+  //4: Posição altura acompanhar
+  text(y1.toFixed(2), x1 + 20, 200 - y1);
+
+  //MARK: - X2
+  fill(186, 97, 255);
+  //Vel. vertical
+  text("Vel. vertical: " + vyMax2.toFixed(2), x2 + 20, 240 - y2);
+  //4: Posição altura acompanhar
+  text(y2.toFixed(2), x2 + 20, 200 - y2);
 }
 
-//O MRUV é vinculado a lançamento vertical
 function MRUV(v, a, t) {
+  //O MRUV é vinculado a lançamento vertical
   let d = v * t + (a * t ** 2) / 2.0;
   return d;
 }
 
-//O MRUV é vinculado ao movimento horizontal
 function MRU(v, t) {
+  //O MRUV é vinculado ao movimento horizontal
   let d = v * t;
   return d;
 }
@@ -78,7 +129,7 @@ function MRU(v, t) {
 function checkController() {
   //Se o rastro não estiver ligado, ele limpa a tela e verifica a grade para desenhar
   if (!checkRastro.checked()) {
-    background(110);
+    background(80);
     if (checkGrade.checked()) {
       grade(10, 10, 50);
     }
@@ -90,7 +141,7 @@ function checkController() {
       gradeDesativada = false;
       //E se a grade estiver desativada mas o rastro não, ele vai limpar a tela uma vez e alterar o booleano -> Desenha o rastro
     } else if (!gradeDesativada) {
-      background(110);
+      background(80);
       gradeDesativada = true;
     }
   }
@@ -101,49 +152,25 @@ function checkController() {
   } else {
     contador++;
     if (contador >= 60) {
-      tAtual += 1 / 2;
+      tAtual += 1;
       contador = 0;
     }
-  }
-
-  //Controla a grade chamando a função dela correspondente (linhas, colunas, intervalo)
-  /*if (checkGrade.checked()) {
-    grade(10, 10, 50);
-  }*/
-}
-
-function colunas(nColunas, altura, intervalo) {
-  //aqui o intervalo é o espaçamento entre cada linha vertical e altura é o tamanho total da linha
-  for (let i = 0; i < nColunas; i++) {
-    line(i * intervalo, 0, i * intervalo, altura);
-  }
-}
-
-function linhas(nLinhas, largura, intervalo) {
-  //e aqui, o intervalo é o espaçamento entre cada linha horizontal e largura é o tamanho total da linha
-  for (let j = 0; j < nLinhas; j++) {
-    line(0, j * intervalo, largura, j * intervalo);
   }
 }
 
 function grade(nColunas, nLinhas, intervalo) {
   let largura = nColunas * intervalo;
   let altura = nLinhas * intervalo;
-  //O +1 inclui a última linha, já que sem isso não é possível ver na grade
-  colunas(nColunas + 1, altura, intervalo);
-  linhas(nLinhas + 1, largura, intervalo);
+
+  for (let i = 0; i <= nColunas; i++) {
+    line(i * intervalo, 0, i * intervalo, altura);
+  }
+
+  for (let j = 0; j <= nLinhas; j++) {
+    line(0, j * intervalo, largura, j * intervalo);
+  }
 }
 
-//Único propósito de reiniciar os valores 
-function reload() {
-  tAtual = 0;
-  pAtual = 0;
-  vAtual = 50;
-  dAtual = 0;
-  contador = 0;
-}
-
-//Usando POO para modelar o círculo na tela, com as funções de desenho e verificação para reiniciar
 class pCircle {
   constructor(x, y, tam) {
     this.x = x;
@@ -153,12 +180,5 @@ class pCircle {
 
   desenha() {
     circle(this.x, this.y, this.tam);
-  }
-
-  //Chama a função reload pra reiniciar os valores
-  verifica() {
-    if (this.x > width || this.x < 0 || this.y > height || this.y < 0) {
-      reload();
-    }
   }
 }
